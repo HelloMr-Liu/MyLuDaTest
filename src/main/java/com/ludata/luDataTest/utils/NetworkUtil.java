@@ -1,11 +1,11 @@
 package com.ludata.luDataTest.utils;
 
 import javax.servlet.http.HttpServletRequest;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.InetAddress;
-import java.net.NetworkInterface;
 import java.net.UnknownHostException;
-import java.util.Enumeration;
 
 /**
  * 常用获取客户端信息的工具
@@ -19,12 +19,10 @@ public  class NetworkUtil {
         return System.getProperty("os.name").toLowerCase();
     }
 
-
-
     /**
      * 获取请求主机IP地址,如果通过代理进来，则透过防火墙获取真实IP地址;
      */
-    public final static String getIpAddress(HttpServletRequest request) throws IOException {
+    public final static String getHostIpAddress(HttpServletRequest request) throws IOException {
         // 获取请求主机IP地址,如果通过代理进来，则透过防火墙获取真实IP地址
         String ipAddress = null;
         //ipAddress = request.getRemoteAddr();     
@@ -56,68 +54,132 @@ public  class NetworkUtil {
         }
         return ipAddress;
     }
+
     /**
-     * 获取本机(windows)的MAC地址唯一标识
+     * 获取当前本机的MAC地址表示
+     * @return
      */
-    public static String  getWindowsMacAddress(){
+    public static String  getHostMacAddress()throws  Exception{
+        return MACUtil.getMAC();
+    }
+
+    /**
+     * 获取当前本机主板的序列号
+     * @return
+     */
+    public static String  getHostMainBordNumber()throws  Exception{
+        return MainBordUtil.getMainBordId();
+    }
+
+    /**
+     * 获取当前本机CPU的序列号
+     * @return
+     */
+    public static String  getHostCPUNumber()throws  Exception{
+        return CPUUtil.getCPUId();
+    }
+
+    /**
+     * 获取当前本机CPU的线程数
+     * @returnhread
+     */
+    public static Integer  getHostCPUTheadNumber(){
+        return Runtime.getRuntime().availableProcessors();
+    }
+
+    /**
+     * 获取当前本机CPU的核心数
+     * @returnhread
+     */
+    public static Integer  getHostCPUCoreNumber(){
+        return OSValidator.getNumberOfCPUCores();
+    }
+}
+
+class OSValidator {
+
+    private static String OS = System.getProperty("os.name").toLowerCase();
+
+    public static boolean isWindows() {
+        return (OS.indexOf("win") >= 0);
+    }
+
+    public static boolean isMac() {
+        return (OS.indexOf("mac") >= 0);
+    }
+
+    public static boolean isUnix() {
+        return (OS.indexOf("nix") >= 0 || OS.indexOf("nux") >= 0 || OS.indexOf("aix") > 0 );
+    }
+
+    public static boolean isSolaris() {
+        return (OS.indexOf("sunos") >= 0);
+    }
+    public static String getOS(){
+        if (isWindows()) {
+            return "win";
+        } else if (isMac()) {
+            return "osx";
+        } else if (isUnix()) {
+            return "uni";
+        } else if (isSolaris()) {
+            return "sol";
+        } else {
+            return "err";
+        }
+    }
+
+    public static int getNumberOfCPUCores() {
+        OSValidator osValidator = new OSValidator();
+        String command = "";
+        if(osValidator.isMac()){
+            command = "sysctl -n machdep.cpu.core_count";
+        }else if(osValidator.isUnix()){
+            command = "lscpu";
+        }else if(osValidator.isWindows()){
+            command = "cmd /C WMIC CPU Get /Format:List";
+        }
+        Process process = null;
+        int numberOfCores = 0;
+        int sockets = 0;
         try {
-            Enumeration<NetworkInterface> el = NetworkInterface
-                    .getNetworkInterfaces();
-            while (el.hasMoreElements()) {
-                byte[] mac = el.nextElement().getHardwareAddress();
-                if (mac == null)
-                    continue;
-
-                String hexstr = bytesToHexString(mac);
-                return getSplitString(hexstr, "-", 2).toUpperCase();
-
+            if(osValidator.isMac()){
+                String[] cmd = { "/bin/sh", "-c", command};
+                process = Runtime.getRuntime().exec(cmd);
+            }else{
+                process = Runtime.getRuntime().exec(command);
             }
-        } catch (Exception exception) {
-            exception.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-        return null;
+
+        BufferedReader reader = new BufferedReader(
+                new InputStreamReader(process.getInputStream()));
+        String line;
+
+        try {
+            while ((line = reader.readLine()) != null) {
+                if(osValidator.isMac()){
+                    numberOfCores = line.length() > 0 ? Integer.parseInt(line) : 0;
+                }else if (osValidator.isUnix()) {
+                    if (line.contains("Core(s) per socket:")) {
+                        numberOfCores = Integer.parseInt(line.split("\\s+")[line.split("\\s+").length - 1]);
+                    }
+                    if(line.contains("Socket(s):")){
+                        sockets = Integer.parseInt(line.split("\\s+")[line.split("\\s+").length - 1]);
+                    }
+                } else if (osValidator.isWindows()) {
+                    if (line.contains("NumberOfCores")) {
+                        numberOfCores = Integer.parseInt(line.split("=")[1]);
+                    }
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        if(osValidator.isUnix()){
+            return numberOfCores * sockets;
+        }
+        return numberOfCores;
     }
-
-
-
-
-
-    private static String getSplitString(String str, String split, int length) {
-        int len = str.length();
-        StringBuilder temp = new StringBuilder();
-        for (int i = 0; i < len; i++) {
-            if (i % length == 0 && i > 0) {
-                temp.append(split);
-            }
-            temp.append(str.charAt(i));
-        }
-        String[] attrs = temp.toString().split(split);
-        StringBuilder finalMachineCode = new StringBuilder();
-        for (String attr : attrs) {
-            if (attr.length() == length) {
-                finalMachineCode.append(attr).append(split);
-            }
-        }
-        String result = finalMachineCode.toString().substring(0,
-                finalMachineCode.toString().length() - 1);
-        return result;
-    }
-
-    public static String bytesToHexString(byte[] src) {
-        StringBuilder stringBuilder = new StringBuilder("");
-        if (src == null || src.length <= 0) {
-            return null;
-        }
-        for (int i = 0; i < src.length; i++) {
-            int v = src[i] & 0xFF;
-            String hv = Integer.toHexString(v);
-            if (hv.length() < 2) {
-                stringBuilder.append(0);
-            }
-            stringBuilder.append(hv);
-        }
-        return stringBuilder.toString();
-    }
-
-
 }

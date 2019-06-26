@@ -48,7 +48,7 @@ public class UserRequestAspect {
         try{
             System.out.println("执行当前方法之前");
             //获取当前请求的IP地址
-            String ipAddress= NetworkUtil.getIpAddress(request);
+            String ipAddress= NetworkUtil.getHostIpAddress(request);
             //方法执行前的毫秒数
             Long startTime=System.currentTimeMillis();
 
