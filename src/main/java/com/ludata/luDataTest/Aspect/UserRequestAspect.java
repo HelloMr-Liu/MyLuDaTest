@@ -32,7 +32,8 @@ public class UserRequestAspect {
     /**
      * 定义那些方法需要被切面操作
      */
-    @Pointcut("execution(public * com.ludata.luDataTest.controller.*.*Aspact*(..))")
+    //@Pointcut("execution(public * com.ludata.luDataTest.controller.*.*Aspact*(..))")
+    @Pointcut("execution(public * com.ludata.luDataTest.controller.*.*(..))")
     public void webLog(){
 
     }
