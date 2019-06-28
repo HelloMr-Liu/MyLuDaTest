@@ -11,11 +11,17 @@ import javax.servlet.http.HttpServletRequest;
 @Controller
 public class TestAspectController {
 
+    //记录器
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(TestAspectController.class);
+
 
     @RequestMapping("/Aspect/testAspact1")
     @ResponseBody
     public void testAspact1(HttpServletRequest request) throws  Exception{
 
+        log.info("我就来了我进入到了/Aspect/testAspact1");
+        log.error("错误了");
+        log.error("进来就错误了");
 
         System.out.println("我正在执行这个内部方法开始 ");
         System.out.println("本机操作系统:"+ NetworkUtil.getOSName());
