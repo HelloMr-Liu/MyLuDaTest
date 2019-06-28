@@ -64,6 +64,14 @@ public  class NetworkUtil {
     }
 
     /**
+     * 获取请求方的MAC地址表示
+     * @return
+     */
+    public static String  getHostMacAddress(HttpServletRequest request)throws  Exception{
+        return MACUtil.getMAC(request);
+    }
+
+    /**
      * 获取当前本机主板的序列号
      * @return
      */
@@ -77,6 +85,11 @@ public  class NetworkUtil {
      */
     public static String  getHostCPUNumber()throws  Exception{
         return CPUUtil.getCPUId();
+    }
+
+
+    public static String getHostDiskNumber()throws  Exception{
+        return DiskUtil.getDiskId();
     }
 
     /**

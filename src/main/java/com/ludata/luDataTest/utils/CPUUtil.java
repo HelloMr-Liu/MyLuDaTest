@@ -93,11 +93,4 @@ public class CPUUtil {
         return cpuId;
     }
 
-    public static void main(String[] args) throws Exception {
-        String os = getOSName();
-        System.out.println(os);
-        String cpuid = getCPUId();
-        System.out.println(cpuid);
-    }
-
 }
